@@ -1,0 +1,23 @@
+= 0.7 = 
+* Changed name of tag scrycardpack to p1p1cube.
+
+= 0.6 =
+* Fixed a way to target certain printings by adding ":set" after the cardname in the link and image tags.
+* Added two new tags [mtgimg] and [mtglink], these look the same as the scryfall tags to users but can take parameters to create links and images from any pictures or urls.
+
+= 0.5 =
+* Changed the tagname of [scrypauperpack] to [scrycardpack]
+* [scrycardpack] takes inputs such as column and url like: [scrycardpack column="2"]http://example.com/mycube.csv[/scrycardpack] It needs a CSV file publicly available on the internet for it to work and the link needs to be a direct link.
+
+= 0.4 =
+* Added "Example Pack" functionality for thepaupercube.com by using [scrypauperpack]. This picks out 15 random cards from the pauper cube list. The list of cards are located in the cardlist.txt file (Copy pasted NAME column from 'https://docs.google.com/spreadsheets/d/12iQhC4bHqFW7hEWxPBjyC8yBDehFZ0_4DkqzyA8EL3o').
+
+= 0.3 =
+* Added support for double sided cards.
+* Changed so cardzoom is on top of text.
+* Fixed a bug where an apostrophe (') would break the search.
+
+= 0.2 =
+* Changed name of css class in order to avoid overrides.
+* Hover image on link is now under the link.
+* The link tag doesn't break <p></p> anymore.

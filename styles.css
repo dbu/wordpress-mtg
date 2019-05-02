@@ -1,0 +1,13 @@
+.scryfall_hover-zoom { transition: transform .2s; width: 200px; position: relative; z-index: 10; }
+.scryfall_hover-zoom:hover { transform: scale(1.5); z-index: 100; }
+.scryfall_hover-zoom--container { position: relative; }
+
+.clickable { cursor: pointer; }
+
+.scryfall_hover_img a { position:relative; display: inline-block; }
+.scryfall_hover_img a span { position:absolute; display:none; z-index:99;}
+.scryfall_hover_img a:hover span { display:block; width: 200px; }
+
+.scryfall_card-hover-size{ width: 250px; }
+
+.mtg_utils_cardpack{ display:table-cell; vertical-align:middle; text-align:center; }
