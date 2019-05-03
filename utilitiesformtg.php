@@ -87,6 +87,107 @@ function ufmtg_build_deck($atts, $content = null) {
 }
 
 /**
+ * Render a decklist with quantities and groups.
+ *
+ * [decklist]
+ * // Creatures
+ * 2 serra angel
+ * 2 grunn, the lonely king
+ * // Spells
+ * cancel
+ * // Sideboard
+ * disfigure
+ * [/decklist]
+ *
+ * Sections are denoted by //, numbers are optional
+ */
+function ufmtg_build_decklist($atts, $content = null)
+{
+    // map of card name => positions in decklist (same card can be in main and sideboard)
+    $cards = [];
+    // deck is section name => [cards]
+    $sections = [];
+    $content = str_replace(['<br />', '<br/>', '<br>', '<p>', '</p>'], "\n", $content);
+    $content = strip_tags($content);
+    if (0 !== strncmp('//', $content, 2)) {
+        $sectionName = 'Deck';
+        $sectionCount = 0;
+        $sectionCards = [];
+    }
+
+    foreach (explode("\n", $content) as $pos => $row) {
+        $pos = 'p'.$pos; // prevent php making the index numeric which would break all pointers when we array_unshift.
+        $row = trim($row);
+        if ('' === $row) continue;
+        if (0 === strncmp('//', $row, 2)) {
+            if (count($sectionCards)) {
+                array_unshift($sectionCards, $sectionName.' ('.$sectionCount.')');
+                $sections[$sectionName] = $sectionCards;
+                $sectionCards = [];
+            }
+            $sectionName = trim(substr($row, 2));
+            $sectionCount = 0;
+        } else {
+            $matches = [];
+            preg_match('/(\d?)\s*(.+)/', $row, $matches);
+            $cardName = $matches[2];
+            $amount = $matches[1];
+            $sectionCards[$pos] = '<div class="cardAmountWrap">'.('' === $amount ? '' : $amount.' ');
+            $cards[strtolower($cardName)][] = ['section' => $sectionName, 'pos' => $pos];
+            $sectionCount += $amount ?: 1;
+        }
+    }
+    if (count($sectionCards)) {
+        array_unshift($sectionCards, $sectionName.' ('.$sectionCount.')');
+        $sections[$sectionName] = $sectionCards;
+    }
+
+    $data = ufmtg_get_data_from_scryfall(array_keys($cards), true);
+    foreach ($data as $card) {
+        $key = strtolower($card['name']);
+        $addresses = [];
+        if (array_key_exists($key, $cards)) {
+            $addresses = $cards[$key];
+            unset($cards[$key]);
+        } else {
+            if (false !== strpos($key, '//')) {
+                $frontKey = trim(substr($key, 0, strpos($key, '//')));
+                if (array_key_exists($frontKey, $cards)) {
+                    $addresses = $cards[$frontKey];
+                    unset($cards[$frontKey]);
+                }
+            }
+
+            // still not found?
+            if (!$addresses) {
+                $sections['Error'][] = 'Error with your decklist for card: '.$key;
+            }
+        }
+
+        $link = ufmtg_build_link($card);
+        foreach ($addresses as $address) {
+            $sections[$address['section']][$address['pos']] .= $link.'</div>';
+        }
+    }
+    // if there are any entries left in $cards, we did not find them on scryfall
+    if (count($cards)) {
+        $notFound = array_keys($cards);
+        array_unshift($notFound, 'Not Found');
+        $sections['Not Found'] = $notFound;
+    }
+
+    $deckHtml = '<div class="deck">';
+    foreach ($sections as $section) {
+        $heading = array_shift($section);
+        $deckHtml .= '<div class="deck-section"><h3>'.$heading.'</h3>';
+        $deckHtml .= implode("\n", $section);
+        $deckHtml .= '</div>';
+    }
+
+    return $deckHtml.'</div>';
+}
+
+/**
  * Function to get image html for a list of cards separated by :
  */
 function ufmtg_get_list_from_scryfall($cardlist, $exact = false) {
@@ -341,6 +442,7 @@ add_shortcode('scryimg', 'ufmtg_get_scryfall_image');
 add_shortcode('scrylink', 'ufmtg_get_scryfall_link');
 add_shortcode('p1p1cube', 'ufmtg_randomize_card_pack');
 add_shortcode('p1p1deck', 'ufmtg_build_deck');
+add_shortcode('decklist', 'ufmtg_build_decklist');
 add_shortcode('mtgimg', 'ufmtg_get_mtg_image');
 add_shortcode('mtglink', 'ufmtg_get_mtg_link');
 add_shortcode('mtgprecache', 'ufmtg_precache_cards');

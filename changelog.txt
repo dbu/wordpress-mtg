@@ -1,4 +1,7 @@
-= 0.7 = 
+= unreleased =
+* Added [decklist] tag for full decklists. The list is rendered with each card like a [scrylink].
+
+= 0.7 =
 * Changed name of tag scrycardpack to p1p1cube.
 
 = 0.6 =
