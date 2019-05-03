@@ -230,7 +230,7 @@ function ufmtg_build_link(array $inputcard)
         return 'Card not found';
     }
 
-    if (isset($inputcard['card_faces'])) {
+    if ('transform' === $inputcard['layout']) {
         $front = $inputcard['card_faces'][0]['image_uris']['normal'];
         $back = $inputcard['card_faces'][1]['image_uris']['normal'];
 
