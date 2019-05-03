@@ -39,3 +39,16 @@
   vertical-align: middle;
   text-align: center;
 }
+
+@media screen
+  and (min-device-width: 1200px)
+  and (-webkit-min-device-pixel-ratio: 1) {
+    .deck {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      grid-column-gap: 10px;
+      grid-row-gap: 40px;
+    }
+
+}
+
