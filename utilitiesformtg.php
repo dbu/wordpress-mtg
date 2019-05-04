@@ -242,7 +242,7 @@ function ufmtg_create_scryfall_url($name_of_card) {
         $setCode = $explodedString[1];
         $setCode = "&set=" . $setCode;
     }
-    $cardname = str_replace(array(" ", "'"), array("+", ""), $name);
+    $cardname = str_replace(array(' ', "'", '&#8217;'), array('+', '', ''), $name);
     if (strpos($cardname, ':') !== false) {
         $cardname = substr($cardname, 0, strpos($cardname, ':'));
     }
