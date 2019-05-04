@@ -131,6 +131,7 @@ function ufmtg_build_decklist($atts, $content = null)
             $matches = [];
             preg_match('/(\d?)\s*(.+)/', $row, $matches);
             $cardName = $matches[2];
+            $cardName = str_replace(array('&#8217;', '’'), "'", $cardName);
             $amount = $matches[1];
             $sectionCards[$pos] = '<div class="cardAmountWrap">'.('' === $amount ? '' : $amount.' ');
             $cards[strtolower($cardName)][] = ['section' => $sectionName, 'pos' => $pos];
@@ -213,11 +214,8 @@ function ufmtg_get_data_from_scryfall(array $cards, $exact)
 {
     $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
 
-    $glue = '+or+';
-    if ($exact) {
-        $glue .= '!';
-    }
-    $card_list = implode($glue, $cards);
+    $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
+    $card_list = '%20'.implode($glue, $cards).'%20';
     if ($exact) {
         $card_list = '!'.$card_list;
     }
