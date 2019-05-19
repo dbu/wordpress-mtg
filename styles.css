@@ -7,7 +7,7 @@
 
 .scryfall_hover_img a { position:relative; display: inline-block; }
 .scryfall_hover_img a span { display:none; z-index:99;}
-.scryfall_hover_img a:hover span { display:inline-block; width: 200px; margin-left: 10px;}
+.scryfall_hover_img a:hover span { display:inline-block; width: 200px; margin-left: 10px; position: absolute; }
 
 .scryfall_card-hover-size{ width: 250px; }
 
