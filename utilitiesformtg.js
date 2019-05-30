@@ -11,8 +11,7 @@ function swapimage(id, front, back) {
     }
 };
 
-//bind touch event
-//TODO: check how we do this with dynamic content
+//bind touch event in intervall since we can't be sure the view is already loaded
 setInterval(function  () {
   document.querySelectorAll(".scryfall_hover_img").forEach(function(scryFallWrapper){
     scryFallWrapper.addEventListener("touchstart", function (event) {
