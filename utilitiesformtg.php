@@ -129,7 +129,9 @@ function ufmtg_build_decklist($atts, $content = null)
             $sectionCount = 0;
         } else {
             $matches = [];
-            preg_match('/(\d?)\s*(.+)/', $row, $matches);
+            // 20 Mountain
+            // 4 Lord of Atlantis
+            preg_match('/(\d*)\s*(.+)/', $row, $matches);
             $cardName = $matches[2];
             $cardName = str_replace(array('&#8217;', '’'), "'", $cardName);
             $amount = $matches[1];
@@ -363,6 +365,10 @@ function ufmtg_get_scryfall_link($atts, $content = null)
     if (is_string($cardlist)) {
         $result = ufmtg_call_api("get", ufmtg_create_scryfall_url($content));
         $cardlist = json_decode($result, true);
+    }
+
+    if (!$cardlist) {
+        return $result;
     }
 
     return ufmtg_build_link($cardlist);
