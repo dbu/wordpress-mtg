@@ -172,8 +172,14 @@ function ufmtg_build_decklist($atts, $content = null)
             $sections[$address['section']][$address['pos']] .= $link.'</div>';
         }
     }
+
     // if there are any entries left in $cards, we did not find them on scryfall
     if (count($cards)) {
+        foreach ($cards as $addresses) {
+            foreach ($addresses as $address) {
+                unset($sections[$address['section']][$address['pos']]);
+            }
+        }
         $notFound = array_keys($cards);
         array_unshift($notFound, 'Not Found');
         $sections['Not Found'] = $notFound;
