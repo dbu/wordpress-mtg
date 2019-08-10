@@ -163,6 +163,9 @@ function ufmtg_build_decklist($atts, $content = null)
 
             // still not found?
             if (!$addresses) {
+                if (!array_key_exists('Error', $sections)) {
+                    $sections['Error'] = ['Errors'];
+                }
                 $sections['Error'][] = 'Error with your decklist for card: '.$key;
             }
         }
@@ -183,6 +186,9 @@ function ufmtg_build_decklist($atts, $content = null)
         $notFound = array_keys($cards);
         array_unshift($notFound, 'Not Found');
         $sections['Not Found'] = $notFound;
+    } elseif (array_key_exists('Error', $sections)) {
+        error_log('Extra answers from scryfall: '.implode(', ', $sections['Error'], true));
+        unset($sections['Error']);
     }
 
     $deckHtml = '<div class="deck">';
@@ -220,21 +226,29 @@ function ufmtg_get_list_from_scryfall($cardlist, $exact = false) {
 
 function ufmtg_get_data_from_scryfall(array $cards, $exact)
 {
-    $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
+    $result = [];
+    // commander decklists... unique card search seems to cut off at 50, even paging does not help
+    foreach (array_chunk($cards, 50) as $cardChunk) {
+        $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
 
-    $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
-    $card_list = '%20'.implode($glue, $cards).'%20';
-    if ($exact) {
-        $card_list = '!'.$card_list;
+        $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
+        $card_list = '%20'.implode($glue, $cardChunk).'%20';
+        if ($exact) {
+            $card_list = '!'.$card_list;
+        }
+        $card_list = str_replace(array(' ', "'"), '', $card_list);
+        $search_url .= $card_list;
+        do {
+            $response = ufmtg_call_api("get", $search_url);
+            $parsed_response = json_decode($response, true);
+            $result = array_merge($result, $parsed_response['data']);
+            if (array_key_exists('next_page', $parsed_response)) {
+                $search_url = $parsed_response['next_page'];
+            }
+        } while(array_key_exists('next_page', $parsed_response));
     }
-    $card_list = str_replace(array(' ', "'"), '', $card_list);
 
-    $search_url .= $card_list;
-
-    $result = ufmtg_call_api("get", $search_url);
-    $parsed_result = json_decode($result, true);
-
-    return $parsed_result['data'];
+    return $result;
 }
 
 /**
