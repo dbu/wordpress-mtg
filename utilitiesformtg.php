@@ -187,6 +187,7 @@ function ufmtg_build_decklist($atts, $content = null)
         array_unshift($notFound, 'Not Found');
         $sections['Not Found'] = $notFound;
     } elseif (array_key_exists('Error', $sections)) {
+        // we found all cards, probably the errors are extra results (e.g. search for "Auramancer" finds a couple of extra results)
         error_log('Extra answers from scryfall: '.implode(', ', $sections['Error'], true));
         unset($sections['Error']);
     }
@@ -228,7 +229,8 @@ function ufmtg_get_data_from_scryfall(array $cards, $exact)
 {
     $result = [];
     // commander decklists... unique card search seems to cut off at 50, even paging does not help
-    foreach (array_chunk($cards, 50) as $cardChunk) {
+    // chunk at 40 to have some margin for extra results
+    foreach (array_chunk($cards, 40) as $cardChunk) {
         $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
 
         $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
