@@ -1,10 +1,10 @@
 ﻿=== Utilities for MTG ===
-Contributors: Yunra
+Contributors: Yunra, dbudbu
 Tags: scryfall, mtg, magic, tcg
 Donate link: https://www.patreon.com/yunra
 Requires at least: 4.9.8
-Tested up to: 5.2
-Stable tag: 1.2.0
+Tested up to: 5.5
+Stable tag: 1.4.0
 Requires PHP: 5.5.4
 
 Get links and pictures of cards just by typing the cards name.
@@ -38,6 +38,12 @@ Just download and activate the plugin and start using the tags in your pages. No
 [mtgprecache]card|card:set|card|card[/mtgprecache] - Used to pre-cache cards to speed up loading of page. Requires perfect spelling of cardnames.
 
 == Changelog ==
+
+= 1.4.0 =
+* Updated to display new double faced cards
+
+= 1.3.0 =
+* No changes to how shortcodes work, just code cleanup.
 
 = 1.1.1 = 
 * Fixed a bug where the precache did not accept setcode
