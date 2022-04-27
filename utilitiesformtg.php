@@ -103,6 +103,9 @@ function ufmtg_build_deck($atts, $content = null) {
  */
 function ufmtg_build_decklist($atts, $content = null)
 {
+    // smartquote messes up with single quote at the start or end of a word
+    // not sure how we can disable smart quotes (wptexturize) filter for just the decklists, so reversing the effect
+    $content = str_replace(array('&#8217;', '&#8218;', '’'), '\'', $content);
     // map of card name => positions in decklist (same card can be in main and sideboard)
     $cards = [];
     // deck is section name => [cards]
@@ -133,7 +136,6 @@ function ufmtg_build_decklist($atts, $content = null)
             // 4 Lord of Atlantis
             preg_match('/(\d*)\s*(.+)/', $row, $matches);
             $cardName = $matches[2];
-            $cardName = str_replace(array('&#8217;', '’'), "'", $cardName);
             $amount = $matches[1];
             $sectionCards[$pos] = '<div class="cardAmountWrap">'.('' === $amount ? '' : $amount.' ');
             $cards[strtolower($cardName)][] = ['section' => $sectionName, 'pos' => $pos];
