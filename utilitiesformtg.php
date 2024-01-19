@@ -105,7 +105,8 @@ function ufmtg_build_decklist($atts, $content = null)
 {
     // smartquote messes up with single quote at the start or end of a word
     // not sure how we can disable smart quotes (wptexturize) filter for just the decklists, so reversing the effect
-    $content = str_replace(array('&#8217;', '&#8218;', '’'), '\'', $content);
+    $content = str_replace(array('&#8216;', '&#8217;', '&#8218;', '&#8242;', '’', '‘'), '\'', $content);
+
     // map of card name => positions in decklist (same card can be in main and sideboard)
     $cards = [];
     // deck is section name => [cards]
@@ -235,12 +236,12 @@ function ufmtg_get_data_from_scryfall(array $cards, $exact)
     foreach (array_chunk($cards, 40) as $cardChunk) {
         $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
 
+        $cardChunk = array_map('urlencode', $cardChunk);
         $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
-        $card_list = '%20'.implode($glue, $cardChunk).'%20';
+        $card_list = '%22'.implode($glue, $cardChunk).'%22';
         if ($exact) {
             $card_list = '!'.$card_list;
         }
-        $card_list = str_replace(array(' ', "'"), '', $card_list);
         $search_url .= $card_list;
         do {
             $response = ufmtg_call_api("get", $search_url);

@@ -1,4 +1,6 @@
 = unreleased =
+* Use `urlencode` rather than randomly replace some characters in card names.
+* Replace more stupid quotes variants added by wptexturize with the real simple quote.
 * Added [decklist] tag for full decklists. The list is rendered with each card like a [scrylink].
 
 = 0.9 =
