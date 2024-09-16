@@ -87,6 +87,126 @@ function ufmtg_build_deck($atts, $content = null) {
 }
 
 /**
+ * Render a decklist with quantities and groups.
+ *
+ * [decklist]
+ * // Creatures
+ * 2 serra angel
+ * 2 grunn, the lonely king
+ * // Spells
+ * cancel
+ * // Sideboard
+ * disfigure
+ * [/decklist]
+ *
+ * Sections are denoted by //, numbers are optional
+ */
+function ufmtg_build_decklist($atts, $content = null)
+{
+    // smartquote messes up with single quote at the start or end of a word
+    // not sure how we can disable smart quotes (wptexturize) filter for just the decklists, so reversing the effect
+    $content = str_replace(array('&#8216;', '&#8217;', '&#8218;', '&#8242;', '’', '‘'), '\'', $content);
+
+    // map of card name => positions in decklist (same card can be in main and sideboard)
+    $cards = [];
+    // deck is section name => [cards]
+    $sections = [];
+    $content = str_replace(['<br />', '<br/>', '<br>', '<p>', '</p>'], "\n", $content);
+    $content = strip_tags($content);
+    if (0 !== strncmp('//', $content, 2)) {
+        $sectionName = 'Deck';
+        $sectionCount = 0;
+        $sectionCards = [];
+    }
+
+    foreach (explode("\n", $content) as $pos => $row) {
+        $pos = 'p'.$pos; // prevent php making the index numeric which would break all pointers when we array_unshift.
+        $row = trim($row);
+        if ('' === $row) continue;
+        if (0 === strncmp('//', $row, 2)) {
+            if (count($sectionCards)) {
+                array_unshift($sectionCards, $sectionName.' ('.$sectionCount.')');
+                $sections[$sectionName] = $sectionCards;
+                $sectionCards = [];
+            }
+            $sectionName = trim(substr($row, 2));
+            $sectionCount = 0;
+        } else {
+            $matches = [];
+            // 20 Mountain
+            // 4 Lord of Atlantis
+            preg_match('/(\d*)\s*(.+)/', $row, $matches);
+            $cardName = $matches[2];
+            $amount = $matches[1];
+            $sectionCards[$pos] = '<div class="cardAmountWrap">'.('' === $amount ? '' : $amount.' ');
+            $cards[strtolower($cardName)][] = ['section' => $sectionName, 'pos' => $pos];
+            $sectionCount += $amount ?: 1;
+        }
+    }
+    if (count($sectionCards)) {
+        array_unshift($sectionCards, $sectionName.' ('.$sectionCount.')');
+        $sections[$sectionName] = $sectionCards;
+    }
+
+    $data = ufmtg_get_data_from_scryfall(array_keys($cards), true);
+    foreach ($data as $card) {
+        $key = strtolower($card['name']);
+        $addresses = [];
+        if (array_key_exists($key, $cards)) {
+            $addresses = $cards[$key];
+            unset($cards[$key]);
+        } else {
+            if (false !== strpos($key, '//')) {
+                $frontKey = trim(substr($key, 0, strpos($key, '//')));
+                if (array_key_exists($frontKey, $cards)) {
+                    $addresses = $cards[$frontKey];
+                    unset($cards[$frontKey]);
+                }
+            }
+
+            // still not found?
+            if (!$addresses) {
+                if (!array_key_exists('Error', $sections)) {
+                    $sections['Error'] = ['Errors'];
+                }
+                $sections['Error'][] = 'Error with your decklist for card: '.$key;
+            }
+        }
+
+        $link = ufmtg_build_link($card);
+        foreach ($addresses as $address) {
+            $sections[$address['section']][$address['pos']] .= $link.'</div>';
+        }
+    }
+
+    // if there are any entries left in $cards, we did not find them on scryfall
+    if (count($cards)) {
+        foreach ($cards as $addresses) {
+            foreach ($addresses as $address) {
+                unset($sections[$address['section']][$address['pos']]);
+            }
+        }
+        $notFound = array_keys($cards);
+        array_unshift($notFound, 'Not Found');
+        $sections['Not Found'] = $notFound;
+    } elseif (array_key_exists('Error', $sections)) {
+        // we found all cards, probably the errors are extra results (e.g. search for "Auramancer" finds a couple of extra results)
+        error_log('Extra answers from scryfall: '.implode(', ', $sections['Error'], true));
+        unset($sections['Error']);
+    }
+
+    $deckHtml = '<div class="deck">';
+    foreach ($sections as $section) {
+        $heading = array_shift($section);
+        $deckHtml .= '<div class="deck-section"><h3>'.$heading.'</h3>';
+        $deckHtml .= implode("\n", $section);
+        $deckHtml .= '</div>';
+    }
+
+    return $deckHtml.'</div>';
+}
+
+/**
  * Function to get image html for a list of cards separated by :
  */
 function ufmtg_get_list_from_scryfall($cardlist, $exact = false) {
@@ -110,24 +230,30 @@ function ufmtg_get_list_from_scryfall($cardlist, $exact = false) {
 
 function ufmtg_get_data_from_scryfall(array $cards, $exact)
 {
-    $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
+    $result = [];
+    // commander decklists... unique card search seems to cut off at 50, even paging does not help
+    // chunk at 40 to have some margin for extra results
+    foreach (array_chunk($cards, 40) as $cardChunk) {
+        $search_url = "https://api.scryfall.com/cards/search?unique=cards&q=";
 
-    $glue = '+or+';
-    if ($exact) {
-        $glue .= '!';
+        $cardChunk = array_map('urlencode', $cardChunk);
+        $glue = $exact ? '%22+or+!%22' : '%22+or+%22';
+        $card_list = '%22'.implode($glue, $cardChunk).'%22';
+        if ($exact) {
+            $card_list = '!'.$card_list;
+        }
+        $search_url .= $card_list;
+        do {
+            $response = ufmtg_call_api("get", $search_url);
+            $parsed_response = json_decode($response, true);
+            $result = array_merge($result, $parsed_response['data']);
+            if (array_key_exists('next_page', $parsed_response)) {
+                $search_url = $parsed_response['next_page'];
+            }
+        } while(array_key_exists('next_page', $parsed_response));
     }
-    $card_list = implode($glue, $cards);
-    if ($exact) {
-        $card_list = '!'.$card_list;
-    }
-    $card_list = str_replace(array(' ', "'"), '', $card_list);
 
-    $search_url .= $card_list;
-
-    $result = ufmtg_call_api("get", $search_url);
-    $parsed_result = json_decode($result, true);
-
-    return $parsed_result['data'];
+    return $result;
 }
 
 /**
@@ -143,7 +269,7 @@ function ufmtg_create_scryfall_url($name_of_card) {
         $setCode = $explodedString[1];
         $setCode = "&set=" . $setCode;
     }
-    $cardname = str_replace(array(" ", "'"), array("+", ""), $name);
+    $cardname = str_replace(array(' ', "'", '&#8217;'), array('+', '', ''), $name);
     if (strpos($cardname, ':') !== false) {
         $cardname = substr($cardname, 0, strpos($cardname, ':'));
     }
@@ -230,7 +356,7 @@ function ufmtg_build_link(array $inputcard)
         return 'Card not found';
     }
 
-    if (isset($inputcard['card_faces'])) {
+    if ('transform' === $inputcard['layout']) {
         $front = $inputcard['card_faces'][0]['image_uris']['normal'];
         $back = $inputcard['card_faces'][1]['image_uris']['normal'];
 
@@ -264,6 +390,10 @@ function ufmtg_get_scryfall_link($atts, $content = null)
     if (is_string($cardlist)) {
         $result = ufmtg_call_api("get", ufmtg_create_scryfall_url($content));
         $cardlist = json_decode($result, true);
+    }
+
+    if (!$cardlist) {
+        return $result;
     }
 
     return ufmtg_build_link($cardlist);
@@ -341,6 +471,7 @@ add_shortcode('scryimg', 'ufmtg_get_scryfall_image');
 add_shortcode('scrylink', 'ufmtg_get_scryfall_link');
 add_shortcode('p1p1cube', 'ufmtg_randomize_card_pack');
 add_shortcode('p1p1deck', 'ufmtg_build_deck');
+add_shortcode('decklist', 'ufmtg_build_decklist');
 add_shortcode('mtgimg', 'ufmtg_get_mtg_image');
 add_shortcode('mtglink', 'ufmtg_get_mtg_link');
 add_shortcode('mtgprecache', 'ufmtg_precache_cards');
