@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: Utilities for MTG
-Description: Small plugin to display Magic The Gathering cards in images or links. Can generate 15 card booster packs from a csv file to be displayed. Display your cube in style!
-Version:     1.4.0
-Author:      Martin Ekström
+Plugin Name: Utilities for MTG (fork by dbu)
+Description: Forked from https://wordpress.com/plugins/utilities-for-mtg - Plugin to display Magic The Gathering cards in images or links. Can show decklists, card images and card links, as well as generate 15 card booster packs from a csv file to be displayed. Display your cube in style!
+Version:     1.4.1
+Author:      Martin Ekström, David Buchmann
 */
 
 add_action('wp_enqueue_scripts', 'add_styles');
