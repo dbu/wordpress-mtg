@@ -17,7 +17,7 @@ function add_styles() {
 
 function ufmtg_call_api($method, $url, $data = false)
 {
-    usleep (300); //Scryfall wants delays between requests not to overload server
+    usleep (50); //Scryfall wants delays between requests not to overload server
 
     $result = wp_remote_retrieve_body(wp_remote_get($url));
 
