@@ -1,11 +1,16 @@
-= 0.9 = 
+= unreleased =
+* Use `urlencode` rather than randomly replace some characters in card names.
+* Replace more stupid quotes variants added by wptexturize with the real simple quote.
+* Added [decklist] tag for full decklists. The list is rendered with each card like a [scrylink].
+
+= 0.9 =
 * Added caching if cardnames end with a set tag so if there are more than 1 card from a certain set on a page, the page should load faster since the set is cached and it can take cards from the cache instead.
 
 = 0.8 =
 * Fixed loading times of p1p1cube.
 * Added new tag [p1p1deck] - Make a list of predefined card images by typing names of cards between the tags, separated by colon (:).
 
-= 0.7 = 
+= 0.7 =
 * Changed name of tag scrycardpack to p1p1cube.
 
 = 0.6 =
